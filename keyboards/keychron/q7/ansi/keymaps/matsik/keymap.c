@@ -15,6 +15,7 @@
  */
 
 #include QMK_KEYBOARD_H
+#include "quantum.h"
 
 // clang-format off
 
@@ -65,3 +66,110 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         _______,           _______,  _______, _______, _______, _______, _______, _______, _______, _______,  _______,           _______,           _______, _______,
         _______, _______,  _______,                             _______,                            _______,  _______, _______,  _______,  _______, _______, _______)
 };
+
+void color_fun_row(bool light) {
+    uint8_t r = 0;
+    uint8_t g = 0;
+    uint8_t b = 0;
+    if (light) {
+        r = 127;
+        g = 32;
+        b = 153;
+    }
+
+    uint8_t fun_start = 1;
+    uint8_t fun_end = 12;
+    for (uint8_t i = fun_start; i <= fun_end; i++) {
+        rgb_matrix_set_color(i, r, g, b);
+    }
+}
+
+void color_tilde(bool light) {
+    uint8_t r = 0;
+    uint8_t g = 0;
+    uint8_t b = 0;
+    if (light) {
+        r = 255;
+        g = 0;
+        b = 0;
+    }
+
+    uint8_t tilde_idx = 0;
+    rgb_matrix_set_color(tilde_idx, r, g, b);
+}
+
+bool fun_toggled = false;
+void handle_fun_toggle(void) {
+    fun_toggled = !fun_toggled;
+    color_fun_row(fun_toggled);
+    color_tilde(fun_toggled);
+}
+
+void color_media_row(bool light) {
+    uint8_t color = 0;
+    if (light) {
+        color = 255;
+    }
+
+    uint8_t media_start = 7;
+    uint8_t media_end = 12;
+    for (uint8_t i = media_start; i <= media_end; i++) {
+        if (i == 8) {
+            rgb_matrix_set_color(i, color, 0, 0);
+        } else if (i == 10) {
+            rgb_matrix_set_color(i, 0, 0, color);
+        } else {
+            rgb_matrix_set_color(i, 0, color, 0);
+        }
+    }
+}
+
+void color_caps(bool light) {
+    uint8_t r = 0;
+    uint8_t g = 0;
+    uint8_t b = 0;
+    if (light) {
+        r = 255;
+        g = 255;
+        b = 255;
+    }
+
+    uint8_t fn_idx = 68;
+    rgb_matrix_set_color(fn_idx, r, g, b);
+
+    // I don't want the caps to light up
+    uint8_t caps_idx = 32;
+    rgb_matrix_set_color(caps_idx, 0, 0, 0);
+}
+
+bool caps_toggled = false;
+void handle_caps_toggle(void) {
+    caps_toggled = !caps_toggled;
+    color_caps(caps_toggled);
+}
+
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    switch (keycode) {
+        // handle functional toggle
+        case TG(_FN3):
+            if (record->event.pressed) {
+                handle_fun_toggle();
+            }
+            return true;
+        // handle windows media hold
+        case MO(_FN2):
+            bool pressed = record->event.pressed;
+
+            color_tilde(pressed);
+            color_media_row(pressed);
+
+            return true;
+        case KC_CAPS:
+            if (record->event.pressed) {
+                handle_caps_toggle();
+            }
+            return true;
+        default:
+            return true;
+    }
+}
