@@ -30,6 +30,15 @@ enum layers{
 #define KC_TASK LGUI(KC_TAB)
 #define KC_FLXP LGUI(KC_E)
 
+// Define constants for RGB matrix indices
+#define TILDE_IDX 0
+#define CAPS_IDX 32
+#define FN_IDX 68
+#define MEDIA_START 7
+#define MEDIA_END 12
+#define FUN_START 1
+#define FUN_END 12
+
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [MAC_BASE] = LAYOUT_ansi_72(
         QK_GESC,  KC_1,     KC_2,     KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_8,    KC_9,    KC_0,     KC_MINS, KC_EQL,   KC_BSPC,           KC_INS,  RM_NEXT,
@@ -67,35 +76,23 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         _______, _______,  _______,                             _______,                            _______,  _______, _______,  _______,  _______, _______, _______)
 };
 
-void color_fun_row(bool light) {
-    uint8_t r = 0;
-    uint8_t g = 0;
-    uint8_t b = 0;
-    if (light) {
-        r = 127;
-        g = 32;
-        b = 153;
-    }
-
-    uint8_t fun_start = 1;
-    uint8_t fun_end = 12;
-    for (uint8_t i = fun_start; i <= fun_end; i++) {
+// Helper function to set RGB color for a range of keys
+void set_rgb_color_range(uint8_t start, uint8_t end, uint8_t r, uint8_t g, uint8_t b) {
+    for (uint8_t i = start; i <= end; i++) {
         rgb_matrix_set_color(i, r, g, b);
     }
 }
 
-void color_tilde(bool light) {
-    uint8_t r = 0;
-    uint8_t g = 0;
-    uint8_t b = 0;
+void color_fun_row(bool light) {
     if (light) {
-        r = 255;
-        g = 0;
-        b = 0;
+        set_rgb_color_range(FUN_START, FUN_END, 127, 32, 153);
+    } else {
+        set_rgb_color_range(FUN_START, FUN_END, 0, 0, 0);
     }
+}
 
-    uint8_t tilde_idx = 0;
-    rgb_matrix_set_color(tilde_idx, r, g, b);
+void color_tilde(bool light) {
+    rgb_matrix_set_color(TILDE_IDX, light ? 255 : 0, 0, 0);
 }
 
 bool fun_toggled = false;
@@ -106,14 +103,8 @@ void handle_fun_toggle(void) {
 }
 
 void color_media_row(bool light) {
-    uint8_t color = 0;
-    if (light) {
-        color = 255;
-    }
-
-    uint8_t media_start = 7;
-    uint8_t media_end = 12;
-    for (uint8_t i = media_start; i <= media_end; i++) {
+    uint8_t color = light ? 255 : 0;
+    for (uint8_t i = MEDIA_START; i <= MEDIA_END; i++) {
         if (i == 8) {
             rgb_matrix_set_color(i, color, 0, 0);
         } else if (i == 10) {
@@ -125,21 +116,8 @@ void color_media_row(bool light) {
 }
 
 void color_caps(bool light) {
-    uint8_t r = 0;
-    uint8_t g = 0;
-    uint8_t b = 0;
-    if (light) {
-        r = 255;
-        g = 255;
-        b = 255;
-    }
-
-    uint8_t fn_idx = 68;
-    rgb_matrix_set_color(fn_idx, r, g, b);
-
-    // I don't want the caps to light up
-    uint8_t caps_idx = 32;
-    rgb_matrix_set_color(caps_idx, 0, 0, 0);
+    rgb_matrix_set_color(FN_IDX, light ? 255 : 0, light ? 255 : 0, light ? 255 : 0);
+    rgb_matrix_set_color(CAPS_IDX, 0, 0, 0); // Ensure caps lock doesn't light up
 }
 
 bool caps_toggled = false;
