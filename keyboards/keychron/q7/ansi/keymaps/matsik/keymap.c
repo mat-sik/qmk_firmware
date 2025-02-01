@@ -30,14 +30,24 @@ enum layers{
 #define KC_TASK LGUI(KC_TAB)
 #define KC_FLXP LGUI(KC_E)
 
-// Define constants for RGB matrix indices
+// Define key indecies
 #define TILDE_IDX 0
 #define CAPS_IDX 32
 #define FN_IDX 68
 #define MEDIA_START 7
-#define MEDIA_END 12
+#define MEDIA_END 9
+#define VOLUME_START 10
+#define VOLUME_END 12
 #define FUN_START 1
 #define FUN_END 12
+
+// Define colors
+#define _RGB_BLACK (rgb_t){0, 0, 0}
+#define _RGB_WHITE (rgb_t){255, 255, 255}
+#define _RGB_PURPLE (rgb_t){145, 5, 250}
+#define _RGB_RED (rgb_t){255, 0, 0}
+#define _RGB_GREEN (rgb_t){0, 240, 170}
+#define _RGB_BLUE (rgb_t){0, 190, 255}
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [MAC_BASE] = LAYOUT_ansi_72(
@@ -76,71 +86,67 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         _______, _______,  _______,                             _______,                            _______,  _______, _______,  _______,  _______, _______, _______)
 };
 
-// Helper function to set RGB color for a range of keys
-void set_rgb_color_range(uint8_t start, uint8_t end, uint8_t r, uint8_t g, uint8_t b) {
+void set_rgb_color_range(uint8_t start, uint8_t end, rgb_t rgb) {
     for (uint8_t i = start; i <= end; i++) {
-        rgb_matrix_set_color(i, r, g, b);
+        rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
     }
 }
 
-void color_fun_row(bool light) {
-    if (light) {
-        set_rgb_color_range(FUN_START, FUN_END, 127, 32, 153);
-    } else {
-        set_rgb_color_range(FUN_START, FUN_END, 0, 0, 0);
+void color_func(rgb_t rgb) {
+    set_rgb_color_range(FUN_START, FUN_END, rgb);
+}
+
+void color_tilde(rgb_t rgb) {
+    rgb_matrix_set_color(TILDE_IDX, rgb.r, rgb.g, rgb.b);
+}
+
+void color_media(rgb_t rgb) {
+    set_rgb_color_range(MEDIA_START, MEDIA_END, rgb);
+}
+
+void color_volume(rgb_t rgb) {
+    set_rgb_color_range(VOLUME_START, VOLUME_END, rgb);
+}
+
+void color_caps(rgb_t rgb) {
+    rgb_matrix_set_color(FN_IDX, rgb.r, rgb.g, rgb.b);
+}
+
+void handle_caps_coloring(bool shouldColor) {
+    rgb_t caps_color = _RGB_BLACK;
+    if (shouldColor) {
+        caps_color = _RGB_WHITE;
     }
+    color_caps(caps_color);
 }
 
-void color_tilde(bool light) {
-    rgb_matrix_set_color(TILDE_IDX, light ? 255 : 0, 0, 0);
-}
+void handle_layer_coloring(void) {
+    switch(get_highest_layer(layer_state|default_layer_state)) {
+        case _FN2: // handle media, volume hold
+            color_tilde(_RGB_RED);
+            color_media(_RGB_GREEN);
+            color_volume(_RGB_BLUE);
 
-bool fun_toggled = false;
-void handle_fun_toggle(void) {
-    fun_toggled = !fun_toggled;
-    color_fun_row(fun_toggled);
-    color_tilde(fun_toggled);
-}
+            break;
+        case _FN3: // handle functional toggle
+            color_tilde(_RGB_RED);
+            color_func(_RGB_PURPLE);
 
-void color_media_row(bool light) {
-    uint8_t color = light ? 255 : 0;
-    for (uint8_t i = MEDIA_START; i <= MEDIA_END; i++) {
-        if (i == 8) {
-            rgb_matrix_set_color(i, color, 0, 0);
-        } else if (i == 10) {
-            rgb_matrix_set_color(i, 0, 0, color);
-        } else {
-            rgb_matrix_set_color(i, 0, color, 0);
-        }
+            break;
+        default: // clear the lights
+            color_tilde(_RGB_BLACK);
+            color_media(_RGB_BLACK);
+            color_volume(_RGB_BLACK);
+
+            color_func(_RGB_BLACK);
+            break;
     }
-}
-
-bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-    switch (keycode) {
-        // handle functional toggle
-        case TG(_FN3):
-            if (record->event.pressed) {
-                handle_fun_toggle();
-            }
-            return true;
-        // handle windows media hold
-        case MO(_FN2):
-            bool pressed = record->event.pressed;
-
-            color_tilde(pressed);
-            color_media_row(pressed);
-
-            return true;
-        default:
-            return true;
-    }
-}
-
-void color_caps(bool light) {
-    rgb_matrix_set_color(FN_IDX, light ? 255 : 0, light ? 255 : 0, light ? 255 : 0);
 }
 
 bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
-    color_caps(host_keyboard_led_state().caps_lock);
+    handle_caps_coloring(host_keyboard_led_state().caps_lock);
+
+    handle_layer_coloring();
+
     return false;
 }
