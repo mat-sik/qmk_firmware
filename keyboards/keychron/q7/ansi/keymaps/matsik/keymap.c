@@ -138,7 +138,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
 void color_caps(bool light) {
     rgb_matrix_set_color(FN_IDX, light ? 255 : 0, light ? 255 : 0, light ? 255 : 0);
-    rgb_matrix_set_color(CAPS_IDX, 0, 0, 0); // Ensure caps lock doesn't light up
 }
 
 bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
