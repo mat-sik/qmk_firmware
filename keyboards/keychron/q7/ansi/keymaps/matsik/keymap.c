@@ -115,17 +115,6 @@ void color_media_row(bool light) {
     }
 }
 
-void color_caps(bool light) {
-    rgb_matrix_set_color(FN_IDX, light ? 255 : 0, light ? 255 : 0, light ? 255 : 0);
-    rgb_matrix_set_color(CAPS_IDX, 0, 0, 0); // Ensure caps lock doesn't light up
-}
-
-bool caps_toggled = false;
-void handle_caps_toggle(void) {
-    caps_toggled = !caps_toggled;
-    color_caps(caps_toggled);
-}
-
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
         // handle functional toggle
@@ -142,12 +131,17 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             color_media_row(pressed);
 
             return true;
-        case KC_CAPS:
-            if (record->event.pressed) {
-                handle_caps_toggle();
-            }
-            return true;
         default:
             return true;
     }
+}
+
+void color_caps(bool light) {
+    rgb_matrix_set_color(FN_IDX, light ? 255 : 0, light ? 255 : 0, light ? 255 : 0);
+    rgb_matrix_set_color(CAPS_IDX, 0, 0, 0); // Ensure caps lock doesn't light up
+}
+
+bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
+    color_caps(host_keyboard_led_state().caps_lock);
+    return false;
 }
