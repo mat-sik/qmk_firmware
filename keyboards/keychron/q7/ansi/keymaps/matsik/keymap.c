@@ -115,7 +115,7 @@ void color_caps(rgb_t rgb) {
 void handle_caps_coloring(bool shouldColor) {
     rgb_t caps_color = _RGB_BLACK;
     if (shouldColor) {
-        caps_color = _RGB_WHITE;
+        caps_color = _RGB_GREEN;
     }
     color_caps(caps_color);
 }
@@ -125,7 +125,7 @@ void handle_layer_coloring(void) {
         case _FN2: // handle media, volume hold
             color_tilde(_RGB_RED);
             color_media(_RGB_GREEN);
-            color_volume(_RGB_BLUE);
+            color_volume(_RGB_PURPLE);
 
             break;
         case _FN3: // handle functional toggle
