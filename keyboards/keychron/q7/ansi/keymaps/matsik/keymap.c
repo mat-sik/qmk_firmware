@@ -120,25 +120,43 @@ void handle_caps_coloring(bool shouldColor) {
     color_caps(caps_color);
 }
 
+void light_up_media_volume(void) {
+    color_tilde(_RGB_RED);
+    color_media(_RGB_GREEN);
+    color_volume(_RGB_PURPLE);
+}
+
+void light_down_media_volume(void) {
+    color_tilde(_RGB_BLACK);
+    color_media(_RGB_BLACK);
+    color_volume(_RGB_BLACK);
+}
+
+void light_up_func(void) {
+    color_tilde(_RGB_RED);
+    color_func(_RGB_PURPLE);
+}
+
+void light_down_func(void) {
+    color_tilde(_RGB_BLACK);
+    color_func(_RGB_BLACK);
+}
+
 void handle_layer_coloring(void) {
     switch(get_highest_layer(layer_state|default_layer_state)) {
         case _FN2: // handle media, volume hold
-            color_tilde(_RGB_RED);
-            color_media(_RGB_GREEN);
-            color_volume(_RGB_PURPLE);
-
+            light_down_func();
+            light_up_media_volume();
             break;
         case _FN3: // handle functional toggle
-            color_tilde(_RGB_RED);
-            color_func(_RGB_PURPLE);
+            light_down_media_volume();
+            light_up_func();
 
             break;
         default: // clear the lights
-            color_tilde(_RGB_BLACK);
-            color_media(_RGB_BLACK);
-            color_volume(_RGB_BLACK);
+            light_down_func();
+            light_down_media_volume();
 
-            color_func(_RGB_BLACK);
             break;
     }
 }
