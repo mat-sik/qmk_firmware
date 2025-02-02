@@ -147,6 +147,7 @@ void handle_layer_coloring(void) {
         case _FN2: // handle media, volume hold
             light_down_func();
             light_up_media_volume();
+
             break;
         case _FN3: // handle functional toggle
             light_down_media_volume();
