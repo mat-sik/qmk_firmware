@@ -169,3 +169,28 @@ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
 
     return false;
 }
+
+static const uint8_t led_map[MATRIX_ROWS][MATRIX_COLS] = {
+    // Row 0
+    {  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15},
+    // Row 1
+    { 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31 },
+    // Row 2
+    { 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 44, 45, 46 },
+    // Row
+    { 47, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 58, 59, 60 },
+    // Row 4
+    { 61, 62, 63, 64, 64, 64, 64, 64, 64, 65, 66, 67, 68, 69, 70, 71 }
+};
+
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    rgb_t rgb = _RGB_BLACK;
+    if (record->event.pressed) {
+        rgb = _RGB_GREEN;
+    }
+
+    uint8_t led_idx = led_map[record->event.key.row][record->event.key.col];
+    rgb_matrix_set_color(led_idx, rgb.r, rgb.g, rgb.b);
+
+    return true;
+}
