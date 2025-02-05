@@ -87,8 +87,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 };
 
 void set_rgb_color_range(uint8_t start, uint8_t end, rgb_t rgb) {
-    for (uint8_t i = start; i <= end; i++) {
-        rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
+    for (uint8_t led_idx = start; led_idx <= end; led_idx++) {
+        rgb_matrix_set_color(led_idx, rgb.r, rgb.g, rgb.b);
     }
 }
 
@@ -142,8 +142,44 @@ void light_down_func(void) {
     color_func(_RGB_BLACK);
 }
 
-void handle_layer_coloring(void) {
-    switch(get_highest_layer(layer_state|default_layer_state)) {
+typedef struct {
+    bool is_active;
+} key_status_t;
+
+static key_status_t key_statuses[MATRIX_ROWS * MATRIX_COLS] = {0};
+
+bool is_protected_key(uint8_t led_idx, uint8_t current_layer) {
+    bool is_protected_key = false;
+    if (led_idx == FN_IDX) {
+        return true;
+    }
+
+    if (current_layer == _FN2) {
+        is_protected_key = (led_idx >= MEDIA_START && led_idx <= MEDIA_END) ||
+                          (led_idx >= VOLUME_START && led_idx <= VOLUME_END) ||
+                          (led_idx == TILDE_IDX);
+    } else if (current_layer == _FN3) {
+        is_protected_key = (led_idx >= FUN_START && led_idx <= FUN_END) ||
+                          (led_idx == TILDE_IDX);
+    }
+    return is_protected_key;
+}
+
+void handle_key_effect(uint8_t current_layer) {
+    for (uint8_t led_idx = 0; led_idx < MATRIX_ROWS * MATRIX_COLS; led_idx++) {
+        if (is_protected_key(led_idx, current_layer)) {
+            continue;
+        }
+        rgb_t color = _RGB_BLACK;
+        if (key_statuses[led_idx].is_active) {
+            color = _RGB_GREEN;
+        }
+        rgb_matrix_set_color(led_idx, color.r, color.g, color.b);
+    }
+}
+
+void handle_layer_coloring(uint8_t current_layer) {
+    switch(current_layer) {
         case _FN2: // handle media, volume hold
             light_down_func();
             light_up_media_volume();
@@ -165,7 +201,11 @@ void handle_layer_coloring(void) {
 bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
     handle_caps_coloring(host_keyboard_led_state().caps_lock);
 
-    handle_layer_coloring();
+    uint8_t current_layer = get_highest_layer(layer_state|default_layer_state);
+
+    handle_layer_coloring(current_layer);
+
+    handle_key_effect(current_layer);
 
     return false;
 }
@@ -184,13 +224,9 @@ static const uint8_t led_map[MATRIX_ROWS][MATRIX_COLS] = {
 };
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-    rgb_t rgb = _RGB_BLACK;
-    if (record->event.pressed) {
-        rgb = _RGB_GREEN;
-    }
-
     uint8_t led_idx = led_map[record->event.key.row][record->event.key.col];
-    rgb_matrix_set_color(led_idx, rgb.r, rgb.g, rgb.b);
+
+    key_statuses[led_idx].is_active = record->event.pressed;
 
     return true;
 }
