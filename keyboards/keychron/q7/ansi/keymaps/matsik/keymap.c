@@ -49,6 +49,9 @@ enum layers{
 #define _RGB_GREEN (rgb_t){0, 240, 170}
 #define _RGB_BLUE (rgb_t){0, 190, 255}
 
+// Define other
+#define KEY_LIGHT_UP_TIME 2500
+
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [MAC_BASE] = LAYOUT_ansi_72(
         QK_GESC,  KC_1,     KC_2,     KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_8,    KC_9,    KC_0,     KC_MINS, KC_EQL,   KC_BSPC,           KC_INS,  RM_NEXT,
@@ -143,8 +146,18 @@ void light_down_func(void) {
 }
 
 typedef struct {
-    bool is_active;
+    uint32_t turn_off_time;
 } key_status_t;
+
+uint32_t get_next_turn_off_time(void) {
+    uint32_t current_time = timer_read();
+    return current_time + KEY_LIGHT_UP_TIME;
+}
+
+bool should_turn_off(key_status_t key_status) {
+    uint32_t current_time = timer_read();
+    return current_time > key_status.turn_off_time;
+}
 
 static key_status_t key_statuses[MATRIX_ROWS * MATRIX_COLS] = {0};
 
@@ -170,9 +183,10 @@ void handle_key_effect(uint8_t current_layer) {
         if (is_protected_key(led_idx, current_layer)) {
             continue;
         }
-        rgb_t color = _RGB_BLACK;
-        if (key_statuses[led_idx].is_active) {
-            color = _RGB_GREEN;
+        rgb_t color = _RGB_GREEN;
+        if (should_turn_off(key_statuses[led_idx])) {
+            key_statuses[led_idx].turn_off_time = 0;
+            color = _RGB_BLACK;
         }
         rgb_matrix_set_color(led_idx, color.r, color.g, color.b);
     }
@@ -226,7 +240,9 @@ static const uint8_t led_map[MATRIX_ROWS][MATRIX_COLS] = {
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     uint8_t led_idx = led_map[record->event.key.row][record->event.key.col];
 
-    key_statuses[led_idx].is_active = record->event.pressed;
+    if (record->event.pressed) {
+        key_statuses[led_idx].turn_off_time = get_next_turn_off_time();
+    }
 
     return true;
 }
