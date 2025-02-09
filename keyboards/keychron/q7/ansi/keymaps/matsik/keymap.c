@@ -46,7 +46,7 @@ enum layers{
 #define _RGB_WHITE (rgb_t){255, 255, 255}
 #define _RGB_PURPLE (rgb_t){145, 5, 250}
 #define _RGB_RED (rgb_t){255, 0, 0}
-#define _RGB_GREEN (rgb_t){0, 240, 170}
+#define _RGB_GREEN (rgb_t){0, 255, 213}
 #define _RGB_BLUE (rgb_t){0, 190, 255}
 
 // Define other
