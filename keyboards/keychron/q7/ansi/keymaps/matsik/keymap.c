@@ -50,7 +50,7 @@ enum layers{
 #define _RGB_BLUE (rgb_t){0, 190, 255}
 
 // Define other
-#define KEY_LIGHT_UP_TIME 2500
+#define KEY_LIGHT_UP_TIME 5000
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [MAC_BASE] = LAYOUT_ansi_72(
@@ -146,16 +146,17 @@ void light_down_func(void) {
 }
 
 typedef struct {
-    uint32_t turn_off_time;
+    uint16_t turn_off_time;
+    uint8_t pressed_times;
 } key_status_t;
 
-uint32_t get_next_turn_off_time(void) {
-    uint32_t current_time = timer_read();
+uint16_t get_next_turn_off_time(void) {
+    uint16_t current_time = timer_read();
     return current_time + KEY_LIGHT_UP_TIME;
 }
 
 bool should_turn_off(key_status_t key_status) {
-    uint32_t current_time = timer_read();
+    uint16_t current_time = timer_read();
     return current_time > key_status.turn_off_time;
 }
 
@@ -178,16 +179,30 @@ bool is_protected_key(uint8_t led_idx, uint8_t current_layer) {
     return is_protected_key;
 }
 
+static const rgb_t colors_per_press[] = {
+    _RGB_GREEN,
+    _RGB_WHITE
+};
+
 void handle_key_effect(uint8_t current_layer) {
     for (uint8_t led_idx = 0; led_idx < MATRIX_ROWS * MATRIX_COLS; led_idx++) {
         if (is_protected_key(led_idx, current_layer)) {
             continue;
         }
+
+        uint8_t pressed_times = key_statuses[led_idx].pressed_times;
+
         rgb_t color = _RGB_GREEN;
         if (should_turn_off(key_statuses[led_idx])) {
             key_statuses[led_idx].turn_off_time = 0;
+            key_statuses[led_idx].pressed_times = 0;
+
             color = _RGB_BLACK;
+        } else {
+            uint8_t idx = pressed_times == 1 ? 0 : 1;
+            color = colors_per_press[idx];
         }
+
         rgb_matrix_set_color(led_idx, color.r, color.g, color.b);
     }
 }
@@ -242,6 +257,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
     if (record->event.pressed) {
         key_statuses[led_idx].turn_off_time = get_next_turn_off_time();
+        key_statuses[led_idx].pressed_times += 1;
     }
 
     return true;
