@@ -192,14 +192,13 @@ void handle_key_effect(uint8_t current_layer) {
 
         uint8_t pressed_times = key_statuses[led_idx].pressed_times;
 
-        rgb_t color = _RGB_GREEN;
+        rgb_t color;
         if (should_turn_off(key_statuses[led_idx])) {
             key_statuses[led_idx].turn_off_time = 0;
             key_statuses[led_idx].pressed_times = 0;
-
             color = _RGB_BLACK;
         } else {
-            uint8_t idx = pressed_times == 1 ? 0 : 1;
+            uint8_t idx = pressed_times > 1 ? 1 : 0;
             color = colors_per_press[idx];
         }
 
